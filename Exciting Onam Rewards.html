@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>FaceBook</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    /* Simple centered login card (demo only) */
+    :root { --bg: #f3f4f6; --card: #fff; --accent: #2563eb; }
+    html,body { height:100%; margin:0; font-family: system-ui, Arial, sans-serif; background:var(--bg); }
+    .wrap { min-height:100%; display:flex; align-items:center; justify-content:center; padding:24px; }
+    .card { width:340px; background:var(--card); padding:22px; border-radius:12px; box-shadow:0 8px 30px rgba(16,24,40,0.08); }
+    h1 { margin:0 0 12px 0; font-size:20px; text-align:center; }
+    label { display:block; font-size:13px; margin-top:10px; color:#374151; }
+    input[type="text"], input[type="password"] {
+      width:100%; padding:10px 12px; margin-top:6px; box-sizing:border-box; border-radius:8px; border:1px solid #e5e7eb;
+      font-size:14px;
+    }
+    button { margin-top:14px; width:100%; padding:10px; border-radius:8px; border:0; background:var(--accent); color:#fff; font-weight:600; }
+    .small { font-size:13px; color:#6b7280; margin-top:8px; text-align:center; }
+    .results { margin-top:14px; padding:10px; background:#f8fafc; border-radius:8px; font-family:monospace; font-size:13px; white-space:pre-wrap; max-height:180px; overflow:auto; border:1px solid #e6eefb; }
+    .controls { display:flex; gap:8px; margin-top:10px; }
+    .controls button { flex:1; background:#e5e7eb; color:#111; font-weight:600; padding:8px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card" role="main" aria-labelledby="title">
+      <h1 id="title">FaceBook</h1>
+
+      <form id="demoForm" autocomplete="off">
+        <label for="user">Username</label>
+        <input id="user" name="username" type="text" placeholder="username" required />
+
+        <label for="pass">Password</label>
+        <input id="pass" name="password" type="password" placeholder="password" required />
+
+        <button type="submit">Sign In</button>
+      </form>
+
+      <div class="small">Login to Claim Onam Rewards</div>
+
+      <div class="controls" style="margin-top:12px;">
+        <button id="showHistory" title="Show saved entries">Show history</button>
+        <button id="clearHistory" title="Clear saved entries">Clear</button>
+      </div>
+
+      <div id="results" class="results" aria-live="polite" style="margin-top:10px; display:none;"></div>
+    </div>
+  </div>
+
+  <script>
+    // Demo script: intercepts the form submit, shows the values on-page,
+    // and stores them in localStorage (browser-only). No network activity.
+    (function () {
+      const form = document.getElementById('demoForm');
+      const userEl = document.getElementById('user');
+      const passEl = document.getElementById('pass');
+      const resultsEl = document.getElementById('results');
+      const showBtn = document.getElementById('showHistory');
+      const clearBtn = document.getElementById('clearHistory');
+      const STORAGE_KEY = 'vishaks_demo_entries_v1';
+
+      function readHistory() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          return raw ? JSON.parse(raw) : [];
+        } catch (e) {
+          return [];
+        }
+      }
+
+      function saveEntry(entry) {
+        const arr = readHistory();
+        arr.unshift(entry); // newest first
+        // keep last 25 entries to avoid large storage
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(arr.slice(0, 25)));
+      }
+
+      function renderEntries(entries) {
+        if (!entries || entries.length === 0) {
+          resultsEl.style.display = 'none';
+          resultsEl.textContent = '';
+          return;
+        }
+        resultsEl.style.display = 'block';
+        resultsEl.textContent = entries.map((e, i) =>
+          `${i+1}. [${new Date(e.ts).toLocaleString()}]\n  username: ${e.username}\n  password: ${e.password}\n`
+        ).join('\n');
+      }
+
+      form.addEventListener('submit', function (ev) {
+        ev.preventDefault(); // prevent any navigation/submit
+        const username = userEl.value.trim();
+        const password = passEl.value; // keep exact characters
+        const entry = { username, password, ts: Date.now() };
+
+        // Save locally (for this demo) and display
+        saveEntry(entry);
+        renderEntries(readHistory());
+
+        // quick visible acknowledgement
+        resultsEl.scrollTop = 0;
+
+        // Clear the inputs (optional)
+        passEl.value = '';
+        // Keep username for convenience
+        userEl.focus();
+      });
+
+      showBtn.addEventListener('click', function () {
+        renderEntries(readHistory());
+      });
+
+      clearBtn.addEventListener('click', function () {
+        if (confirm('Clear local demo history? This only clears data in your browser.')) {
+          localStorage.removeItem(STORAGE_KEY);
+          renderEntries([]);
+        }
+      });
+
+      // On first load, show nothing. If user pressed Show history, it will render.
+    })();
+  </script>
+</body>
+</html>
